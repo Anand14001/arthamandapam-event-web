@@ -1,0 +1,245 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   Brand fonts
+   ---------------------------------------------------------------------------
+   The live site declares `benzin*` and `bricola*` families, but the TTF files
+   it points at (/static/assets/fonts/*) return 404, so the production page
+   actually renders in fallback faces. We keep the same @font-face names here
+   pointing at ./public/assets/fonts/ — drop the licensed TTFs in that folder
+   and every heading upgrades automatically, with no other change required.
+
+   Until then the stacks below resolve to the closest free equivalents:
+     Benzin              -> Archivo (variable width, set wide via font-stretch)
+     Bricolage Grotesque -> the real thing, served by Google Fonts
+     Tamil glyphs        -> Noto Sans Tamil (Archivo has no Tamil coverage)
+   =========================================================================== */
+@font-face {
+  font-family: 'Benzin';
+  src: url('/assets/fonts/Benzin-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Benzin';
+  src: url('/assets/fonts/Benzin-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Benzin';
+  src: url('/assets/fonts/Benzin-Semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Benzin';
+  src: url('/assets/fonts/Benzin-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Benzin';
+  src: url('/assets/fonts/Benzin-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-display: swap;
+}
+
+/* Icomoon sets the original uses for the stat circles, the section-2 tag and
+   the FAQ toggle. Copied verbatim from the live site. */
+@font-face {
+  font-family: 'icomoon';
+  src: url('/assets/icons/fonts/icomoon.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'icomoon-two';
+  src: url('/assets/icons/fonts/icomoon-two.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'icomoon-three';
+  src: url('/assets/icons/fonts/icomoon-three.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+/* ===========================================================================
+   Design tokens — lifted from the live stylesheets
+   =========================================================================== */
+@theme {
+  /* :root of qutiiz.min.css */
+  --color-brand: #6222cc;
+  --color-brand-dark: #4a18a0;
+  --color-brand-alt: #6225d1; /* .register-btn / .intro-top h1 span */
+  --color-accent: #9e3ff5; /* .stats-section background */
+  --color-ink: #04000b; /* --qutiiz-black */
+  --color-ink-gray: #181717; /* --qutiiz-gray */
+  --color-lilac: #f0ebff; /* section-2 footer + pricing background */
+  --color-muted: #a09baa; /* theme nav/footer hover grey */
+  --color-partner: #7900d8; /* .partner-item p */
+
+  /* To reproduce the live site's *accidental* serif rendering instead of its
+     intended typography — useful for a strict pixel diff against the current
+     production page — swap these two lines for:
+       --font-display: 'Noto Sans Tamil', serif;
+       --font-body: serif;
+     See the Typography note in README.md for why they differ. */
+  --font-display: 'Benzin', 'Archivo', 'Noto Sans Tamil', sans-serif;
+  --font-body: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+  --font-ui: 'DM Sans', sans-serif; /* --qutiiz-font */
+  --font-cond: 'Barlow Condensed', sans-serif; /* --qutiiz-font-two */
+
+  /* The original's breakpoints are all max-width. Each value is set one pixel
+     above the media query it mirrors so Tailwind's `max-*` variants line up
+     exactly: max-sm: === @media (max-width: 600px), and so on. */
+  --breakpoint-xs: 481px;
+  --breakpoint-sm: 601px;
+  --breakpoint-md: 769px;
+  --breakpoint-lg: 993px;
+  --breakpoint-xl: 1025px;
+  --breakpoint-2xl: 1201px;
+  /* the one min-width query the original uses, for the stat-card dividers */
+  --breakpoint-desk: 1024px;
+
+  --animate-strip: homeStripMove 15s linear infinite;
+  --animate-ticker: homeSection3Move 25s linear infinite;
+}
+
+@keyframes homeStripMove {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes homeSection3Move {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* ===========================================================================
+   Base — mirrors the reset + body rule the original inherits from the theme
+   =========================================================================== */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* The marquee bands are deliberately wider than the viewport (110% / 102.5%,
+     nudged left) so their rotation never shows a corner; this clips the
+     overflow they create, exactly as the source does. */
+  body {
+    width: 100%;
+    overflow-x: hidden;
+    font-family: var(--font-ui);
+    color: var(--color-ink-gray);
+    font-size: 18px;
+    line-height: 34px;
+    font-weight: 400;
+    background-color: #fff;
+  }
+
+  /* The original stacks Bootstrap's reboot under the theme, so headings keep
+     reboot's line-height/weight while qutiiz supplies the family and colour.
+     Without the 1.2 here, any heading that sets no line-height of its own
+     (e.g. .stats-heading) would inherit the body's fixed 34px and collide. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-ink);
+    margin: 0;
+    line-height: 1.2;
+    font-weight: 500;
+    font-family: var(--font-cond);
+  }
+
+  ol,
+  ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  /* Archivo stands in for Benzin's wide geometric proportions. */
+  .font-display,
+  [class*='font-display'] {
+    font-stretch: 112%;
+  }
+}
+
+/* ===========================================================================
+   Icon-font glyph helpers (exact codepoints from the vendor stylesheets)
+   =========================================================================== */
+@layer components {
+  .icon {
+    speak: never;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .icon-lamp::before {
+    font-family: 'icomoon';
+    content: '\e913';
+  }
+  .icon-two-social-media::before {
+    font-family: 'icomoon-two';
+    content: '\e904';
+  }
+  .icon-three-targeting::before {
+    font-family: 'icomoon-three';
+    content: '\e913';
+  }
+  .icon-three-team::before {
+    font-family: 'icomoon-three';
+    content: '\e914';
+  }
+  .icon-three-telephone::before {
+    font-family: 'icomoon-three';
+    content: '\e915';
+  }
+  .icon-three-trophy::before {
+    font-family: 'icomoon-three';
+    content: '\e919';
+  }
+  .icon-three-right-arrow::before {
+    font-family: 'icomoon-three';
+    content: '\e91e';
+  }
+
+  /* FAQ toggle: plus when closed, minus when open — same glyph pair as the
+     theme's .faq-one-accrodion rule. */
+  .faq-toggle::before {
+    font-family: 'icomoon';
+    content: '\e902';
+    font-size: 12px;
+    color: var(--color-brand);
+  }
+  .faq-toggle[data-open='true']::before {
+    content: '\e903';
+  }
+}
