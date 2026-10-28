@@ -1,24 +1,53 @@
 import { useEffect, useRef, useState } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectCoverflow, Navigation } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/effect-coverflow';
-import 'swiper/css/navigation';
 import { TESTIMONIAL_VIDEOS } from '../data/content';
+import { getLenis } from '../lib/smoothScroll';
+import Reveal from './Reveal';
+
+/* YouTube serves these Shorts as a 16:9 frame with the real vertical shot
+   pillarboxed in the middle. Cropping that to 9:16 lands exactly on the
+   pillarboxed region, so the faces stay correctly framed. */
+const poster = (id) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+const posterFallback = (id) => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="ml-[3px] h-5 w-5 fill-brand">
+      <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
 
 /**
- * .youtube-carousel-section — 9:16 Shorts thumbnails in a coverflow carousel
- * that opens the clip in a vertical modal. Swiper options match the page's
- * inline init exactly (depth 120, 3s autoplay, 600ms speed).
+ * Participant videos.
+ *
+ * Replaces a coverflow carousel that autoplayed every three seconds, overlapped
+ * its own cards and could only be operated with a mouse. Five clips fit on one
+ * line from 1025px up, so there is nothing to page through; below that the row
+ * becomes a native snap rail. No carousel library, no autoplay, no duplicated
+ * slides — the visitor decides what to look at and when.
+ *
+ * The dark ground is deliberate: it separates this chapter from the lilac
+ * pricing band above and the white FAQ below, and vertical video reads far
+ * better against it.
  */
 export default function TestimonialsSection() {
-  const prevRef = useRef(null);
-  const nextRef = useRef(null);
   const [activeVideo, setActiveVideo] = useState(null);
+  const closeRef = useRef(null);
+  const lastFocused = useRef(null);
 
-  // The source locks body scroll while the modal is open and closes on Escape.
+  // Holding the page still needs Lenis stopped as well as overflow hidden,
+  // since Lenis keeps driving the scroll position on its own.
   useEffect(() => {
-    document.body.style.overflow = activeVideo ? 'hidden' : '';
+    const lenis = getLenis();
+    if (activeVideo) {
+      lenis?.stop();
+      document.body.style.overflow = 'hidden';
+      closeRef.current?.focus();
+    } else {
+      lenis?.start();
+      document.body.style.overflow = '';
+    }
+
     const onKey = (e) => {
       if (e.key === 'Escape') setActiveVideo(null);
     };
@@ -26,105 +55,115 @@ export default function TestimonialsSection() {
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
+      getLenis()?.start();
     };
   }, [activeVideo]);
 
-  const arrow =
-    'absolute top-1/2 z-20 flex h-[45px] w-[45px] -translate-y-1/2 cursor-pointer items-center ' +
-    'justify-center rounded-full border-2 border-brand bg-white transition-colors duration-200 ' +
-    'hover:bg-[#f5f0ff] max-md:hidden';
-  const chevron = 'h-2.5 w-2.5 border-[#333]';
+  const open = (id, e) => {
+    lastFocused.current = e.currentTarget;
+    setActiveVideo(id);
+  };
+
+  const close = () => {
+    setActiveVideo(null);
+    lastFocused.current?.focus();
+  };
 
   return (
-    <section className="relative overflow-hidden bg-white pb-[50px] pt-20 text-center max-md:pb-[30px] max-md:pt-[50px]">
-      <h2
-        className="mb-[50px] text-[50px] font-medium uppercase leading-[60px] text-black
-                   max-md:mb-[30px] max-md:px-4 max-md:text-[30px] max-[380px]:text-[26px]"
-      >
-        What Our Participants Say
-      </h2>
-
-      <div className="relative mx-auto max-w-[1400px] px-[60px] max-md:px-2.5">
-        <div ref={prevRef} className={`${arrow} left-0`} aria-label="Previous video" role="button">
-          <span className={`${chevron} rotate-[-45deg] border-l-2 border-t-2 translate-x-[2px] translate-y-[2px]`} />
-        </div>
-        <div ref={nextRef} className={`${arrow} right-0`} aria-label="Next video" role="button">
-          <span className={`${chevron} rotate-45 border-r-2 border-t-2 -translate-x-[2px] translate-y-[2px]`} />
-        </div>
-
-        <Swiper
-          modules={[EffectCoverflow, Navigation, Autoplay]}
-          effect="coverflow"
-          grabCursor
-          centeredSlides
-          slidesPerView="auto"
-          loop
-          loopAdditionalSlides={0}
-          watchSlidesProgress
-          autoplay={{ delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true }}
-          coverflowEffect={{ rotate: 0, stretch: 0, depth: 120, modifier: 1, slideShadows: false }}
-          navigation={{ prevEl: prevRef.current, nextEl: nextRef.current }}
-          onBeforeInit={(swiper) => {
-            swiper.params.navigation.prevEl = prevRef.current;
-            swiper.params.navigation.nextEl = nextRef.current;
-          }}
-          speed={600}
-          observer
-          observeParents
-          className="w-full overflow-hidden pb-10 pt-5"
+    <section id="stories" className="w-full overflow-hidden bg-ink py-[clamp(56px,7vw,110px)]">
+      <div className="container-page">
+        <Reveal
+          as="h2"
+          className="mb-[clamp(32px,4vw,56px)] text-center text-[clamp(1.75rem,4vw,3.125rem)]
+                     font-medium uppercase leading-[1.15] text-white"
         >
-          {TESTIMONIAL_VIDEOS.map((id) => (
-            <SwiperSlide
+          What Our <span className="text-accent">Participants</span> Say
+        </Reveal>
+
+        {/* One row on desktop; a snap rail below, where five cards would be too
+            small to read. */}
+        <Reveal
+          as="ul"
+          variant="stagger"
+          className="no-scrollbar -mx-[var(--page-gutter)] flex snap-x snap-mandatory gap-4
+                     overflow-x-auto px-[var(--page-gutter)] pb-2
+                     xl:mx-0 xl:gap-5 xl:overflow-visible xl:px-0"
+        >
+          {TESTIMONIAL_VIDEOS.map((id, i) => (
+            <li
               key={id}
-              onClick={() => setActiveVideo(id)}
-              className="!h-[480px] !w-[270px] cursor-pointer overflow-hidden rounded-[14px] bg-black
-                         max-md:!h-[391px] max-md:!w-[220px] max-md:rounded-xl
-                         max-[380px]:!h-[338px] max-[380px]:!w-[190px]"
+              className="w-[58vw] max-w-[260px] shrink-0 snap-start sm:w-[230px]
+                         xl:w-auto xl:max-w-none xl:flex-1 xl:shrink"
             >
-              <div
-                className="group flex h-full w-full items-center justify-center bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: `url('https://img.youtube.com/vi/${id}/maxresdefault.jpg')` }}
+              <button
+                type="button"
+                onClick={(e) => open(id, e)}
+                aria-label={`Play participant video ${i + 1} of ${TESTIMONIAL_VIDEOS.length}`}
+                className="group relative block aspect-[9/16] w-full cursor-pointer overflow-hidden
+                           rounded-2xl bg-black ring-1 ring-white/10 transition-shadow duration-300
+                           hover:shadow-[0_18px_50px_rgba(0,0,0,0.55)]
+                           focus-visible:outline focus-visible:outline-2
+                           focus-visible:outline-offset-3 focus-visible:outline-accent"
               >
-                <div
-                  className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full
-                             bg-white/90 text-2xl text-brand shadow-[0_4px_15px_rgba(0,0,0,0.3)]
-                             transition-all duration-300 group-hover:scale-110 group-hover:bg-white
-                             group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.4)]"
+                <img
+                  src={poster(id)}
+                  alt=""
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = posterFallback(id);
+                  }}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform
+                             duration-500 ease-out group-hover:scale-[1.05]"
+                />
+
+                {/* Keeps the play control legible over a bright frame. */}
+                <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.5)_0%,transparent_45%)]" />
+
+                <span
+                  className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2
+                             -translate-y-1/2 items-center justify-center rounded-full
+                             bg-white/95 shadow-[0_6px_20px_rgba(0,0,0,0.35)]
+                             transition-transform duration-300 ease-out
+                             group-hover:scale-110 max-sm:h-12 max-sm:w-12"
                 >
-                  <span className="ml-1 leading-none">▶</span>
-                </div>
-              </div>
-            </SwiperSlide>
+                  <PlayIcon />
+                </span>
+              </button>
+            </li>
           ))}
-        </Swiper>
+        </Reveal>
       </div>
 
-      {/* vertical video modal */}
       {activeVideo && (
         <div
-          className="fixed inset-0 z-[999999] flex h-full w-full items-center justify-center bg-black/[0.92] p-[15px]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Participant video"
+          className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/[0.92] p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setActiveVideo(null);
+            if (e.target === e.currentTarget) close();
           }}
         >
-          <div className="relative m-auto w-[min(400px,92vw)] max-w-[400px] max-md:w-[min(340px,88vw)]">
-            <span
-              role="button"
+          <div className="relative w-[min(400px,92vw)] max-md:w-[min(340px,88vw)]">
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={close}
               aria-label="Close video"
-              onClick={() => setActiveVideo(null)}
-              className="absolute -top-[42px] right-0 cursor-pointer text-[35px] font-bold leading-none
-                         text-white transition-colors duration-300 hover:text-brand
-                         max-md:-top-[35px] max-md:text-[30px]"
+              className="absolute -top-11 right-0 text-[32px] font-bold leading-none text-white
+                         transition-colors duration-200 hover:text-accent
+                         focus-visible:outline focus-visible:outline-2
+                         focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               &times;
-            </span>
+            </button>
             <iframe
               src={`https://www.youtube.com/embed/${encodeURIComponent(activeVideo)}?autoplay=1&playsinline=1&rel=0`}
-              title="YouTube Shorts video player"
+              title="Participant video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-              className="block aspect-[9/16] max-h-[82vh] w-full rounded-xl border-none bg-black max-md:max-h-[78vh]"
+              className="block aspect-[9/16] max-h-[82vh] w-full rounded-xl border-none bg-black"
             />
           </div>
         </div>

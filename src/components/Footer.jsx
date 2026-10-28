@@ -1,3 +1,5 @@
+import Reveal from './Reveal';
+import { useRegistration } from './RegistrationProvider';
 import {
   ABOUT_LINE,
   EMAIL,
@@ -7,11 +9,10 @@ import {
   OFFICES,
   PHONE,
   PHONE_HREF,
-  REGISTER_URL,
   SOCIALS,
 } from '../data/content';
 
-const CONTAINER = 'mx-auto w-full max-w-[1280px] px-10 max-md:px-[25px]';
+const CONTAINER = 'container-page';
 
 function PhoneIcon() {
   return (
@@ -87,6 +88,7 @@ function Heading({ children }) {
  * Three zones: a closing CTA band, a contact block, and a legal bar.
  */
 export default function Footer() {
+  const { open } = useRegistration();
   return (
     <footer className="relative z-[1] w-full bg-black text-white">
       {/* ---- closing CTA ------------------------------------------------- */}
@@ -101,13 +103,9 @@ export default function Footer() {
                      bg-[radial-gradient(circle,rgba(255,255,255,0.22)_0%,transparent_70%)]"
         />
 
-        <div className={`${CONTAINER} relative z-[2]`}>
-          <p className="font-display text-[13px] font-medium uppercase tracking-[0.18em] text-white/75 max-sm:text-[11px]">
-            {FOOTER_CTA.eyebrow}
-          </p>
-
+        <Reveal className={`${CONTAINER} relative z-[2]`}>
           <h2
-            className="mx-auto mt-5 max-w-[24ch] text-balance font-display
+            className="mx-auto max-w-[24ch] text-balance font-display
                        text-[clamp(1.9rem,4vw,3.25rem)] font-bold leading-[1.12] text-white"
           >
             {FOOTER_CTA.heading}{' '}
@@ -118,8 +116,9 @@ export default function Footer() {
             {FOOTER_CTA.body}
           </p>
 
-          <a
-            href={REGISTER_URL}
+          <button
+            type="button"
+            onClick={open}
             className="mt-9 inline-block rounded-full bg-white px-12 py-[18px] font-display
                        text-[17px] font-bold tracking-[0.02em] text-brand-alt
                        shadow-[0_14px_40px_rgba(0,0,0,0.3)] transition-all duration-300
@@ -127,19 +126,22 @@ export default function Footer() {
                        max-sm:w-full max-sm:px-6 max-sm:text-[15px]"
           >
             {FOOTER_CTA.cta}
-          </a>
+          </button>
 
           <p className="mt-5 font-body text-sm tracking-[0.04em] text-white/70">
             {FOOTER_CTA.note}
           </p>
-        </div>
+        </Reveal>
       </section>
 
       {/* ---- contact ------------------------------------------------------ */}
       <div className={`${CONTAINER} py-[60px] max-md:py-10`}>
         {/* Columns are sized to their content rather than evenly: the office
             block carries two full addresses, the contact block only two lines. */}
-        <div className="grid grid-cols-[1.1fr_0.9fr_1.4fr] gap-12 max-lg:grid-cols-1 max-lg:gap-10">
+        <Reveal
+          variant="stagger"
+          className="grid grid-cols-[1.1fr_0.9fr_1.4fr] gap-12 max-lg:grid-cols-1 max-lg:gap-10"
+        >
           {/* brand */}
           <div className="max-w-[320px]">
             <a href="/" aria-label="Arthamandapam home">
@@ -221,7 +223,7 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-        </div>
+        </Reveal>
       </div>
 
       {/* ---- legal -------------------------------------------------------- */}

@@ -16,15 +16,35 @@ export const LOGO = '/assets/images/logo/Arthamandabam-logo.webp';
    vendored into the repo — swap for a local file if you need offline playback. */
 export const HERO_VIDEO = 'https://arthamandapam.com/static/assets/videos/season2.mp4';
 
+/* A still lifted from that clip (50 KB). It paints immediately, so the hero is
+   never an empty stage while 104 MB of video streams in — and it stands in as
+   the hero image entirely under reduced motion. */
+export const HERO_POSTER = '/assets/images/events/hero-poster.jpg';
+
 export const HERO = {
-  // The original splits the Tamil headline across three hard-coded lines.
-  headingLines: ['உங்கள் திறமை.', 'உங்கள்', 'அடையாளம்.'],
+  /* The source hard-codes three lines, which splits 'உங்கள் / அடையாளம்.'
+     across a break mid-phrase. Two lines keep each phrase whole; the wording is
+     unchanged. */
+  /* Each line is split so the noun carries the brand accent — the same
+     highlight pattern the Journey and Speakers headings use. */
+  headingLines: [
+    { lead: 'உங்கள் ', accent: 'திறமை.' },
+    { lead: 'உங்கள் ', accent: 'அடையாளம்.' },
+  ],
   leadBefore: 'Build your personal brand.',
   leadAccent: 'Create impactful content.',
   leadAfter: 'Grow your audience. Turn your passion into opportunities.',
   location: 'MMA Auditorium, Chennai',
   date: '05 December 2026',
   cta: 'Book Your Seat',
+  ctaSecondary: "See what's included",
+};
+
+/* Credibility cue under the hero CTA. Names three of the eight speakers and
+   counts the rest — specific people persuade better than a repeated statistic,
+   and it avoids echoing the numbers in the marquee directly below. */
+export const HERO_PROOF = {
+  line: 'Learn from Anitha Sampath, Surendran, Selventhiran and five more creators.',
 };
 
 /* .home-strip renders these as two groups of three. */
@@ -278,10 +298,8 @@ export const OFFICES = [
   },
 ];
 
-/* Closing call to action. The page's last screen should restate the offer and
-   the two facts a visitor needs before committing: when, and where. */
+/* Closing call to action — the page's last screen, restating the offer. */
 export const FOOTER_CTA = {
-  eyebrow: '05 December 2026  ·  MMA Auditorium, Chennai',
   heading: 'Your talent already exists.',
   headingAccent: 'Give it an identity.',
   body: 'One day with the creators who have already built it — and a 30-day content plan you can act on the moment you leave.',
@@ -296,3 +314,23 @@ export const LEGAL = [
   { label: 'Terms & Conditions', href: '/terms_and_conditions/' },
   { label: 'Privacy Policy', href: '/privacy_policy/' },
 ];
+
+/* Mirrors the live Zoho registration form field for field, so the popup asks
+   exactly what the real form asks. "Lead Source" is Zoho's own tracking field
+   and has a single fixed value, so it is carried as a hidden default rather
+   than shown as a one-option dropdown. */
+export const REGISTRATION = {
+  statuses: [
+    'Aspiring Creator',
+    'Active creator',
+    'Anchor-RJ-media professional',
+    'Student',
+    'Business owner',
+    'Other',
+  ],
+  passes: [
+    { label: 'Standard – ₹5,900', amount: '₹5,900' },
+    { label: 'Premium – ₹17,700', amount: '₹17,700' },
+  ],
+  leadSource: 'Zoho Form - Enrollment Form',
+};

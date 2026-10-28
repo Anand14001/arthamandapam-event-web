@@ -109,6 +109,9 @@
 
   --animate-strip: homeStripMove 15s linear infinite;
   --animate-ticker: homeSection3Move 25s linear infinite;
+  /* Partner rail. The other two marquees run the opposite way (-50% -> 0), so
+     this one needs its own keyframe to travel right to left. */
+  --animate-partners: partnersScroll 40s linear infinite;
 }
 
 @keyframes homeStripMove {
@@ -117,6 +120,15 @@
   }
   to {
     transform: translateX(0);
+  }
+}
+
+@keyframes partnersScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
@@ -142,6 +154,32 @@
   /* The marquee bands are deliberately wider than the viewport (110% / 102.5%,
      nudged left) so their rotation never shows a corner; this clips the
      overflow they create, exactly as the source does. */
+  /* No scroll-behavior here: Lenis drives the scroll, and a native smooth
+     behaviour on top of it causes the two to fight over the same jump. The
+     header offset for in-page links is set on the Lenis instance instead. */
+
+  /* Fallback for native anchor jumps; Lenis applies the same offset itself. */
+  #speakers,
+  #event,
+  #passes,
+  #stories,
+  #faq {
+    scroll-margin-top: 96px;
+  }
+
+
+  :root {
+    --page-gutter: clamp(20px, 4vw, 72px);
+
+    /* One motion language for the whole page. Every scroll reveal uses these,
+       so sections enter with the same weight instead of each inventing its
+       own timing. */
+    --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-duration: 700ms;
+    --motion-rise: 18px;
+    --motion-stagger: 70ms;
+  }
+
   body {
     width: 100%;
     overflow-x: hidden;
@@ -191,6 +229,95 @@
    Icon-font glyph helpers (exact codepoints from the vendor stylesheets)
    =========================================================================== */
 @layer components {
+  /* The participant rail scrolls on small screens; the bar itself adds nothing
+     over the snap behaviour and the partial card already hints at more. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Section entrance. The hidden state is added by script after mount, so the
+     content still renders if JavaScript never runs. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(var(--motion-rise));
+    transition:
+      opacity var(--motion-duration) var(--motion-ease),
+      transform var(--motion-duration) var(--motion-ease);
+    will-change: opacity, transform;
+  }
+
+  .reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  /* Staggered variant: the wrapper stays put and its direct children enter in
+     sequence. Used for card rows and lists, so a group reads as one gesture
+     rather than a dozen separate ones. */
+  .reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(var(--motion-rise));
+    transition:
+      opacity var(--motion-duration) var(--motion-ease),
+      transform var(--motion-duration) var(--motion-ease);
+  }
+
+  .reveal-stagger.is-revealed > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  .reveal-stagger.is-revealed > *:nth-child(1) { transition-delay: calc(var(--motion-stagger) * 0); }
+  .reveal-stagger.is-revealed > *:nth-child(2) { transition-delay: calc(var(--motion-stagger) * 1); }
+  .reveal-stagger.is-revealed > *:nth-child(3) { transition-delay: calc(var(--motion-stagger) * 2); }
+  .reveal-stagger.is-revealed > *:nth-child(4) { transition-delay: calc(var(--motion-stagger) * 3); }
+  .reveal-stagger.is-revealed > *:nth-child(5) { transition-delay: calc(var(--motion-stagger) * 4); }
+  .reveal-stagger.is-revealed > *:nth-child(6) { transition-delay: calc(var(--motion-stagger) * 5); }
+  .reveal-stagger.is-revealed > *:nth-child(7) { transition-delay: calc(var(--motion-stagger) * 6); }
+  .reveal-stagger.is-revealed > *:nth-child(8) { transition-delay: calc(var(--motion-stagger) * 7); }
+  .reveal-stagger.is-revealed > *:nth-child(n + 9) { transition-delay: calc(var(--motion-stagger) * 8); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal-stagger > * {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     Page rails.
+
+     Every band on the page used to pick its own ceiling — 1200, 1280, 1400,
+     1480, 1600 — so nothing lined up and the narrowest sections made the whole
+     page look like a column floating in a wide window. These two classes are
+     the only widths the page uses now.
+
+     The gutter is shared, so the header, hero and every section below start on
+     the same vertical line at any width.
+     --------------------------------------------------------------------- */
+  .container-page {
+    width: 100%;
+    max-width: 1760px;
+    margin-inline: auto;
+    padding-inline: var(--page-gutter);
+  }
+
+  /* For bands whose content gets harder to read as it widens — the FAQ rows and
+     the four partner logos. Deliberately tighter, not an oversight. */
+  .container-narrow {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding-inline: var(--page-gutter);
+  }
+
   .icon {
     speak: never;
     font-style: normal;
@@ -231,15 +358,4 @@
     content: '\e91e';
   }
 
-  /* FAQ toggle: plus when closed, minus when open — same glyph pair as the
-     theme's .faq-one-accrodion rule. */
-  .faq-toggle::before {
-    font-family: 'icomoon';
-    content: '\e902';
-    font-size: 12px;
-    color: var(--color-brand);
-  }
-  .faq-toggle[data-open='true']::before {
-    content: '\e903';
-  }
 }

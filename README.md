@@ -99,6 +99,39 @@ Colours, greys, dividers and the heading rule are carried over from
 The now-unused `NAV`, `SERVICES`, `FOOTER_SERVICES` and `INDUSTRIES` data and the
 `MobileNav` component were deleted rather than left dead in the tree.
 
+## Page rails
+
+Every band used to pick its own ceiling — 1200, 1280, 1400, 1480, 1600 — so
+nothing lined up and on a wide monitor the narrowest sections made the page look
+like a column floating in an empty window. There are now two widths, defined
+once in [src/index.css](src/index.css):
+
+| Class | Max width | Used by |
+| --- | --- | --- |
+| `.container-page` | 1760px | header, hero, stats, journey, pricing, testimonials, footer |
+| `.container-narrow` | 1440px | FAQ rows and the partner logos, which get harder to read or sparser as they widen |
+
+Both share `--page-gutter: clamp(20px, 4vw, 72px)`, so the header, hero and
+every section below start on the same vertical line at any width. The speaker
+grid also gains a fourth column from 1201px up, which keeps those 335x300
+portraits near native size instead of upscaling three wide cards.
+
+## Hero
+
+Rebuilt as a full-bleed editorial composition: the Season 1 footage carries the
+stage with the type laid over it, replacing a 60/40 split that read as two
+unrelated panels and left the headline smaller than the video.
+
+The clip is 104 MB, so it is no longer load-bearing. A 50 KB still cropped from
+it ([hero-poster.jpg](public/assets/images/events/hero-poster.jpg)) paints
+first, and under `prefers-reduced-motion` the video is never requested and the
+still is the hero image. The photo panel is held to ~74% of the stage rather
+than stretched full width: the frame is 1.12:1 with the speaker centred, so
+covering the full width would crop his head off and park him behind the copy.
+
+Type is sized with `clamp()` rather than raw `vw`, so the layout stays
+composed from 1366 to 2560 instead of scaling linearly.
+
 ## Two deliberate differences from the live page
 
 Both are cases where the production page renders differently from what its own

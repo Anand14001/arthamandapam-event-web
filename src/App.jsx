@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { startSmoothScroll } from './lib/smoothScroll';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import StatsSection from './components/StatsSection';
@@ -10,11 +12,17 @@ import TestimonialsSection from './components/TestimonialsSection';
 import FaqSection from './components/FaqSection';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import ScrollProgress from './components/ScrollProgress';
+import RegistrationProvider from './components/RegistrationProvider';
 
 /** Section order follows the source document exactly. */
 export default function App() {
+  // One Lenis instance for the whole page, torn down on unmount.
+  useEffect(() => startSmoothScroll(), []);
+
   return (
-    <>
+    <RegistrationProvider>
+      <ScrollProgress />
       <Header />
 
       <main>
@@ -31,6 +39,6 @@ export default function App() {
 
       <Footer />
       <ScrollToTop />
-    </>
+    </RegistrationProvider>
   );
 }

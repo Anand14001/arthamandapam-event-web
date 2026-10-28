@@ -1,141 +1,227 @@
-import { PRICING, REGISTER_URL } from '../data/content';
+import { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { PRICING } from '../data/content';
+import Reveal from './Reveal';
+import { useRegistration } from './RegistrationProvider';
+import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
 
-const CARD_BASE =
-  'relative flex min-h-[680px] flex-col justify-between overflow-hidden rounded-3xl p-[40px_30px] ' +
-  'shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-[transform,box-shadow] duration-300 ' +
-  'hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(0,0,0,0.12)] ' +
-  'max-xl:min-h-[600px] max-md:min-h-[550px] max-md:p-[30px] ' +
-  'max-xs:min-h-0 max-xs:rounded-2xl max-xs:p-6';
+gsap.registerPlugin(ScrollTrigger);
 
-const BTN_BASE =
-  'w-full rounded-[50px] border-none p-[16px_24px] text-center font-display text-[1rem] ' +
-  'font-bold tracking-[0.5px] relative z-[3] cursor-pointer transition-all duration-300 ' +
-  'hover:scale-[1.03] active:scale-[0.98] max-xs:p-[14px_20px] max-xs:text-[0.95rem]';
-
-function Feature({ children }) {
+function Check({ dark }) {
   return (
-    <li className="mb-4 flex items-start gap-3 text-[0.95rem] font-medium leading-[1.6] max-xs:mb-3 max-xs:text-[0.85rem]">
-      <span className="mt-0.5 shrink-0 font-bold">✓</span> {children}
-    </li>
+    <span
+      aria-hidden="true"
+      className={`mt-[2px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                  ${dark ? 'bg-brand/25 text-accent' : 'bg-brand/10 text-brand'}`}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-[9px] w-[9px]">
+        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
+function FeatureList({ items, label, dark }) {
+  return (
+    <>
+      <p
+        className={`mb-4 font-display text-[10px] font-semibold uppercase tracking-[0.18em]
+                    ${dark ? 'text-white/40' : 'text-black/40'}`}
+      >
+        {label}
+      </p>
+      {/* Two columns once the card is wide enough to hold them — a nine-item
+          single column was most of the card's height on its own. */}
+      <ul className="2xl:columns-2 2xl:gap-x-7">
+        {items.map((item) => (
+          <li
+            key={item}
+            className={`mb-[9px] flex break-inside-avoid items-start gap-2.5 font-body
+                        text-[13.5px] leading-[1.5]
+                        ${dark ? 'text-white/75' : 'text-black/65'}`}
+          >
+            <Check dark={dark} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
 /**
- * .pricing-section — a 0.9 / 1.1 / 1.1 column grid of intro copy plus the two
- * passes, collapsing to the intro spanning both cards at 1024px and a single
- * column at 768px.
+ * Choose Your Creator Experience.
+ *
+ * The two passes are not parallel options — Premium is Standard plus five
+ * additions, which is what its own subtitle says. The previous layout put a
+ * nine-item list beside a six-item list and left the visitor to diff them. Here
+ * each list is labelled for what it actually is ("What's included" against
+ * "Plus, exclusive to Premium"), so the relationship is readable at a glance.
+ *
+ * The intro is asymmetric rather than a third column, which also retires the
+ * arbitrary 130px top margin that used to push the second heading into place.
+ *
+ * Deliberately not pinned. A pinned sequence here would hold the visitor still
+ * at the exact moment they are trying to compare two prices and leave, which
+ * costs more than the effect is worth. The only scroll-linked movement is a
+ * drift on the decorative glow that was already part of this section.
  */
 export default function PricingSection() {
   const { standard, premium } = PRICING;
+  const { open } = useRegistration();
+  const root = useRef(null);
+  const reduced = usePrefersReducedMotion();
+
+  useLayoutEffect(() => {
+    if (reduced) return undefined;
+
+    const ctx = gsap.context(() => {
+      gsap.to('.js-pricing-glow', {
+        yPercent: 18,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: root.current,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 0.8,
+        },
+      });
+    }, root);
+
+    return () => ctx.revert();
+  }, [reduced]);
+
+  const panelBase =
+    'relative flex flex-col rounded-[24px] p-[clamp(22px,2.2vw,32px)] transition-transform ' +
+    'duration-300 ease-out hover:-translate-y-1 motion-reduce:transition-none max-xs:rounded-2xl';
+
+  const ctaBase =
+    'mt-5 block w-full rounded-full px-6 py-[14px] text-center font-display text-[14px] ' +
+    'font-bold tracking-[0.04em] transition-all duration-300 hover:-translate-y-0.5 ' +
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4';
 
   return (
     <section
-      className="relative flex justify-center overflow-hidden bg-lilac p-[80px_20px]
-                 before:pointer-events-none before:absolute before:-top-1/2 before:right-[-20%]
-                 before:h-[500px] before:w-[500px] before:rounded-full before:content-['']
-                 before:bg-[radial-gradient(circle,rgba(98,37,209,0.1)_0%,transparent_70%)]
-                 max-md:p-[60px_16px] max-xs:p-[40px_12px]"
+      id="passes"
+      ref={root}
+      className="relative w-full overflow-hidden bg-lilac py-[clamp(64px,8vw,120px)]"
     >
+      {/* The section's existing decorative glow, now a real element so it can
+          drift with the scroll. */}
       <div
-        className="relative z-[2] grid w-full max-w-[1400px] grid-cols-[0.9fr_1.1fr_1.1fr] gap-[30px]
-                   max-xl:grid-cols-2 max-xl:gap-[25px] max-md:grid-cols-1 max-md:gap-5"
-      >
-        {/* intro */}
-        <div className="flex flex-col justify-start py-5 max-xl:col-span-full">
-          <div>
-            <h1
-              className="mb-5 font-display text-[clamp(2.2rem,5vw,3.5rem)] font-black leading-[1.1]
-                         text-[#1a1a1a] max-md:text-[2.5rem] max-xs:text-[1.8rem]"
+        aria-hidden="true"
+        className="js-pricing-glow pointer-events-none absolute -top-[20%] right-[-15%] h-[520px]
+                   w-[520px] rounded-full
+                   bg-[radial-gradient(circle,rgba(98,37,209,0.12)_0%,transparent_70%)]"
+      />
+
+      <div className="container-page relative z-[2]">
+        {/* ---- intro ---- */}
+        <div className="grid items-end gap-[clamp(28px,4vw,72px)] lg:grid-cols-[1.05fr_0.95fr]">
+          <Reveal>
+            <h2
+              className="font-display text-[clamp(2rem,4.2vw,3.4rem)] font-black leading-[1.08]
+                         tracking-[-0.02em] text-[#1a1a1a]"
             >
               {PRICING.headingLead}
               <span className="text-brand-alt">{PRICING.headingAccent}</span>
-            </h1>
-
-            <p className="text-[1rem] leading-[1.6] text-[#555] max-md:max-w-full max-xs:text-[0.9rem]">
+            </h2>
+            <p className="mt-5 max-w-[46ch] font-body text-[17px] leading-[1.6] text-black/60">
               {PRICING.subtext}
             </p>
+          </Reveal>
 
-            <h3
-              className="mb-5 mt-[130px] border-b border-[#1a1a1a] font-display text-[1.3rem]
-                         font-bold max-xs:!mt-5"
-            >
+          <Reveal delay={110}>
+            <h3 className="font-display text-[1.2rem] font-bold text-[#1a1a1a]">
               {PRICING.interTitle}
             </h3>
-
-            <p className="mb-5 text-[1rem] leading-[1.6] text-[#555] max-xs:text-[0.9rem]">
+            <p className="mt-4 font-body text-[15px] leading-[1.7] text-black/60">
               {PRICING.body1}
             </p>
-            <p className="text-[1rem] leading-[1.6] text-[#555] max-xs:text-[0.9rem]">
+            <p className="mt-3 font-body text-[15px] leading-[1.7] text-black/60">
               {PRICING.body2}
             </p>
-          </div>
+          </Reveal>
         </div>
 
-        {/* standard pass */}
-        <div className={`${CARD_BASE} border border-[#f0f0f0] bg-white text-[#1a1a1a]`}>
-          <div className="relative z-[2] flex-grow">
-            <div>
-              <h3 className="mb-2 font-display text-[2rem] font-bold max-xs:text-[1.2rem]">
-                {standard.title}
-              </h3>
-              <p className="text-[1.1rem]">{standard.subtitle}</p>
-              <div className="mb-[30px] font-display text-[3rem] font-black max-md:text-[2.5rem] max-xs:text-[2rem]">
-                {standard.price}
-              </div>
-              <ul className="mb-10 flex-grow">
-                {standard.features.map((f) => (
-                  <Feature key={f}>{f}</Feature>
-                ))}
-              </ul>
-            </div>
-          </div>
+        {/* ---- the two passes ---- */}
+        <div className="mt-[clamp(40px,5vw,72px)] grid items-stretch gap-[clamp(20px,2.5vw,32px)] lg:grid-cols-2">
+          {/* Standard */}
+          <Reveal delay={60} className="flex">
+            <article
+              className={`${panelBase} w-full border border-black/[0.07] bg-white
+                          shadow-[0_18px_50px_rgba(26,10,60,0.07)]`}
+            >
+              <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-black/45">
+                  {standard.title}
+                </p>
+                <p className="font-display text-[clamp(1.9rem,2.6vw,2.4rem)] font-black leading-none text-[#1a1a1a]">
+                  {standard.price}
+                </p>
+              </header>
 
-          <a
-            href={REGISTER_URL}
-            className={`${BTN_BASE} border-2 border-transparent bg-[#1a1a1a] !text-white
-                        hover:shadow-[rgba(9,30,66,0.25)_0px_4px_8px_-2px,rgba(9,30,66,0.08)_0px_0px_0px_1px]`}
-          >
-            {standard.cta}
-          </a>
-        </div>
+              <p className="mt-2 font-display text-[0.95rem] font-medium text-black/70">
+                {standard.subtitle}
+              </p>
 
-        {/* premium pass — dark card with the gradient scrim the theme paints
-            over its background plate */}
-        <div
-          className={`${CARD_BASE} border border-[#333] bg-[#1a1a1a] text-white
-                      before:pointer-events-none before:absolute before:inset-0 before:z-[1]
-                      before:rounded-3xl before:content-['']
-                      before:bg-[linear-gradient(180deg,rgba(26,26,26,0.85)_0%,rgba(26,26,26,0.5)_50%,rgba(26,26,26,0.2)_100%)]`}
-        >
-          <div className="relative z-[2] flex-grow">
-            <div>
-              <h3 className="relative z-[2] mb-2 font-display text-[2rem] font-bold text-white max-xs:text-[1.2rem]">
-                {premium.title}
-              </h3>
-              <p className="text-[1.1rem]">{premium.subtitle}</p>
-              <div className="mb-[30px] font-display text-[3rem] font-black max-md:text-[2.5rem] max-xs:text-[2rem]">
-                {premium.price}
-              </div>
-              <ul className="mb-10 flex-grow">
-                {premium.features.map((f) => (
-                  <Feature key={f}>{f}</Feature>
-                ))}
-                <div
-                  className="mt-5 inline-block rounded-[20px] border border-white/30 bg-white/15
-                             px-4 py-2 text-[0.8rem] font-semibold uppercase tracking-[1px] text-white"
-                >
-                  {premium.badge}
+              {/* The action sits with the price, not at the far end of a long
+                  list — the decision is made here, the detail below is support. */}
+              <button
+                type="button"
+                onClick={open}
+                className={`${ctaBase} bg-[#1a1a1a] text-white outline-[#1a1a1a]
+                            hover:shadow-[0_14px_34px_rgba(0,0,0,0.25)]`}
+              >
+                {standard.cta}
+              </button>
+
+              <hr className="my-6 border-black/10" />
+
+              <FeatureList items={standard.features} label="What's included" />
+            </article>
+          </Reveal>
+
+          {/* Premium */}
+          <Reveal delay={180} className="flex">
+            <article
+              className={`${panelBase} w-full border border-brand/40 bg-ink text-white
+                          shadow-[0_0_0_1px_rgba(98,34,204,0.25),0_26px_70px_rgba(98,34,204,0.32)]`}
+            >
+              <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <p className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">
+                    {premium.title}
+                  </p>
+                  {/* Was a <div> inside the <ul>, which is invalid markup. */}
+                  <span className="rounded-full border border-white/25 bg-white/10 px-2.5 py-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-white">
+                    {premium.badge}
+                  </span>
                 </div>
-              </ul>
-            </div>
-          </div>
+                <p className="font-display text-[clamp(1.9rem,2.6vw,2.4rem)] font-black leading-none text-white">
+                  {premium.price}
+                </p>
+              </header>
 
-          <a
-            href={REGISTER_URL}
-            className={`${BTN_BASE} bg-white !text-[#1a1a1a] hover:bg-[#f0f0f0]`}
-          >
-            {premium.cta}
-          </a>
+              <p className="mt-2 font-display text-[0.95rem] font-medium text-white/80">
+                {premium.subtitle}
+              </p>
+
+              <button
+                type="button"
+                onClick={open}
+                className={`${ctaBase} bg-brand-alt text-white outline-white
+                            shadow-[0_12px_32px_rgba(98,37,209,0.45)] hover:bg-white hover:text-brand-alt`}
+              >
+                {premium.cta}
+              </button>
+
+              <hr className="my-6 border-white/10" />
+
+              <FeatureList items={premium.features} label="Plus, exclusive to Premium" dark />
+            </article>
+          </Reveal>
         </div>
       </div>
     </section>
